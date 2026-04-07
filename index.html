@@ -155,9 +155,40 @@
     }
     #horizon-label { color: rgba(255, 170, 170, 0.4); }
     #vertical-label { color: rgba(136, 170, 255, 0.4); }
+
+    /* ── Background reference image ────────────────────── */
+    #bg-image {
+      position: fixed; inset: 0; z-index: 0;
+      background-size: contain; background-position: center;
+      background-repeat: no-repeat; opacity: 0.35;
+      pointer-events: none;
+    }
+    #upload-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 8px 0; margin-bottom: 4px;
+      font-size: 12px; color: #888; background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    #upload-btn:hover { color: #bbb; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+    #clear-bg { display: none; }
+    #clear-bg.visible {
+      display: inline-block; margin-left: 8px; padding: 4px 10px;
+      font-size: 11px; color: #777; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    #clear-bg.visible:hover { color: #bbb; background: rgba(255,255,255,0.1); }
+    .bg-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .bg-row label { font-size: 12px; color: #666; white-space: nowrap; }
+    .bg-row input[type=range] { flex: 1; }
   </style>
 </head>
 <body>
+
+  <!-- Background reference image -->
+  <div id="bg-image"></div>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
 
   <!-- Draggable hit areas for reference lines -->
   <div id="horizon-hit"></div>
@@ -217,6 +248,16 @@
       <button class="reset-btn" id="resetBtn">全部重設</button>
     </div>
 
+    <div class="section">
+      <h3>參考照片</h3>
+      <div id="upload-btn" role="button" tabindex="0">📷 上傳照片作為背景</div>
+      <div class="bg-row">
+        <label>透明度</label>
+        <input type="range" class="pos" id="bgOpacity" min="10" max="80" value="35">
+        <button id="clear-bg">移除</button>
+      </div>
+    </div>
+
     <div class="legend">
       <div class="legend-item">
         <div class="legend-swatch" style="background:#ff9999"></div>
@@ -255,10 +296,10 @@
     const camera = new THREE.PerspectiveCamera(FOV, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(0, 0, CAM_Z);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(devicePixelRatio);
     renderer.setSize(innerWidth, innerHeight);
-    renderer.setClearColor(0x0f0f1a);
+    renderer.setClearColor(0x0f0f1a, 1);
     document.body.appendChild(renderer.domElement);
 
     // ── Rectangle group ────────────────────────────────────────────
@@ -266,10 +307,11 @@
     scene.add(rectGroup);
     const W = 4.8, H = 3.0;
 
-    rectGroup.add(new THREE.Mesh(
-      new THREE.PlaneGeometry(W, H),
-      new THREE.MeshBasicMaterial({ color: 0xf4ede0, side: THREE.DoubleSide })
-    ));
+    const rectMat = new THREE.MeshBasicMaterial({
+      color: 0xf4ede0, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.55,
+    });
+    rectGroup.add(new THREE.Mesh(new THREE.PlaneGeometry(W, H), rectMat));
 
     // Border
     const bPts = [[-W/2,-H/2],[W/2,-H/2],[W/2,H/2],[-W/2,H/2],[-W/2,-H/2]]
@@ -536,6 +578,41 @@
         panel.classList.remove('open');
         panelToggle.textContent = '☰';
       }
+    });
+
+    // ── Background reference image ─────────────────────────────────
+    const bgEl = $('bg-image');
+    const fileInput = $('file-input');
+    const uploadBtn = $('upload-btn');
+    const clearBg = $('clear-bg');
+    const bgOpacity = $('bgOpacity');
+    let hasBg = false;
+
+    uploadBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      bgEl.style.backgroundImage = `url(${url})`;
+      hasBg = true;
+      clearBg.classList.add('visible');
+      // Make canvas semi-transparent so bg shows through
+      renderer.setClearColor(0x0f0f1a, 0.7);
+      uploadBtn.textContent = '📷 ' + file.name;
+    });
+
+    bgOpacity.addEventListener('input', () => {
+      bgEl.style.opacity = +bgOpacity.value / 100;
+    });
+
+    clearBg.addEventListener('click', () => {
+      bgEl.style.backgroundImage = '';
+      hasBg = false;
+      clearBg.classList.remove('visible');
+      renderer.setClearColor(0x0f0f1a, 1);
+      uploadBtn.textContent = '📷 上傳照片作為背景';
+      fileInput.value = '';
     });
 
     // ── Init + resize ──────────────────────────────────────────────
