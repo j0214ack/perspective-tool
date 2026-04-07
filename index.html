@@ -15,21 +15,14 @@
 
     /* ── Left panel ─────────────────────────────────────── */
     #panel {
-      position: fixed;
-      top: 20px;
-      left: 20px;
+      position: fixed; top: 20px; left: 20px;
       background: rgba(15, 15, 26, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 18px 22px;
-      color: #ddd;
-      min-width: 230px;
-      max-height: calc(100vh - 40px);
-      overflow-y: auto;
-      z-index: 10;
-      user-select: none;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 18px 22px;
+      color: #ddd; min-width: 230px;
+      max-height: calc(100vh - 40px); overflow-y: auto;
+      z-index: 10; user-select: none;
     }
     #panel h2 { font-size: 14px; font-weight: 700; color: #ccc; margin-bottom: 4px; }
     #panel .subtitle { font-size: 11px; color: #444; margin-bottom: 16px; line-height: 1.5; }
@@ -53,24 +46,22 @@
       -webkit-appearance: none; width: 100%; height: 3px;
       background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer;
     }
-    input[type=range].h::-webkit-slider-thumb,
-    input[type=range].hl-pos::-webkit-slider-thumb {
+    input[type=range].h::-webkit-slider-thumb {
       -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
       background: #ffaaaa; cursor: pointer; box-shadow: 0 0 5px rgba(255,150,150,0.3);
     }
-    input[type=range].v::-webkit-slider-thumb,
-    input[type=range].vl-pos::-webkit-slider-thumb {
+    input[type=range].v::-webkit-slider-thumb {
       -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
       background: #99bbff; cursor: pointer; box-shadow: 0 0 5px rgba(100,150,255,0.3);
     }
     input[type=range].pos::-webkit-slider-thumb {
       -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
-      background: #aaa; cursor: pointer;
+      background: #888; cursor: pointer;
     }
     input[type=range]::-moz-range-thumb { border: none; border-radius: 50%; cursor: pointer; }
-    input[type=range].h::-moz-range-thumb, input[type=range].hl-pos::-moz-range-thumb { background: #ffaaaa; width: 14px; height: 14px; }
-    input[type=range].v::-moz-range-thumb, input[type=range].vl-pos::-moz-range-thumb { background: #99bbff; width: 14px; height: 14px; }
-    input[type=range].pos::-moz-range-thumb { background: #aaa; width: 13px; height: 13px; }
+    input[type=range].h::-moz-range-thumb { background: #ffaaaa; width: 14px; height: 14px; }
+    input[type=range].v::-moz-range-thumb { background: #99bbff; width: 14px; height: 14px; }
+    input[type=range].pos::-moz-range-thumb { background: #888; width: 13px; height: 13px; }
 
     .legend {
       display: flex; gap: 14px; padding-top: 14px;
@@ -105,26 +96,49 @@
       letter-spacing: 0.04em; text-align: center; line-height: 1.6;
     }
 
-    /* ── Reference lines ────────────────────────────────── */
+    /* ── Draggable reference lines ──────────────────────── */
+    #horizon-hit {
+      position: fixed; left: 0; right: 0; height: 16px; z-index: 8;
+      cursor: ns-resize; transform: translateY(-50%);
+    }
+    #horizon-hit:hover ~ #horizon-line, #horizon-hit:active ~ #horizon-line,
+    #horizon-hit.dragging ~ #horizon-line {
+      border-top-color: rgba(255, 170, 170, 0.7);
+    }
+    #vertical-hit {
+      position: fixed; top: 0; bottom: 0; width: 16px; z-index: 8;
+      cursor: ew-resize; transform: translateX(-50%);
+    }
+    #vertical-hit:hover ~ #vertical-line, #vertical-hit:active ~ #vertical-line,
+    #vertical-hit.dragging ~ #vertical-line {
+      border-left-color: rgba(136, 170, 255, 0.7);
+    }
+
     .ref-line { position: fixed; pointer-events: none; z-index: 5; }
     #horizon-line {
       left: 0; right: 0; height: 0;
-      border-top: 1px dashed rgba(255, 170, 170, 0.35);
+      border-top: 1px dashed rgba(255, 170, 170, 0.3);
+      transition: border-top-color 0.15s;
     }
     #vertical-line {
       top: 0; bottom: 0; width: 0;
-      border-left: 1px dashed rgba(136, 170, 255, 0.35);
+      border-left: 1px dashed rgba(136, 170, 255, 0.3);
+      transition: border-left-color 0.15s;
     }
     .ref-label {
       position: fixed; font-size: 10px; pointer-events: none;
-      z-index: 6; letter-spacing: 0.05em;
+      z-index: 6; letter-spacing: 0.05em; transition: color 0.15s;
     }
-    #horizon-label { color: rgba(255, 170, 170, 0.45); }
-    #vertical-label { color: rgba(136, 170, 255, 0.45); }
+    #horizon-label { color: rgba(255, 170, 170, 0.4); }
+    #vertical-label { color: rgba(136, 170, 255, 0.4); }
   </style>
 </head>
 <body>
 
+  <!-- Draggable hit areas for reference lines -->
+  <div id="horizon-hit"></div>
+  <div id="vertical-hit"></div>
+  <!-- Visual reference lines -->
   <div id="horizon-line" class="ref-line"></div>
   <div id="vertical-line" class="ref-line"></div>
   <span id="horizon-label" class="ref-label">視平線 HL</span>
@@ -132,7 +146,7 @@
 
   <div id="panel">
     <h2>透視學習工具</h2>
-    <p class="subtitle">拖曳畫面旋轉長方形，觀察<br>平行線在透視下的變化</p>
+    <p class="subtitle">觀察平行的分割線在<br>不同透視角度下的變化</p>
 
     <div class="section">
       <h3>分割線數量</h3>
@@ -153,38 +167,27 @@
     </div>
 
     <div class="section">
-      <h3>投影中心</h3>
-      <div class="row">
-        <div class="row-label">
-          <span>視平線 HL（上下）</span>
-          <span class="val val-pos" id="hlVal">50%</span>
-        </div>
-        <input type="range" class="hl-pos" id="hlSlider" min="10" max="90" value="50" step="1">
-      </div>
-      <div class="row">
-        <div class="row-label">
-          <span>視垂線 VL（左右）</span>
-          <span class="val val-pos" id="vlVal">50%</span>
-        </div>
-        <input type="range" class="vl-pos" id="vlSlider" min="10" max="90" value="50" step="1">
-      </div>
-    </div>
-
-    <div class="section">
       <h3>長方形位置</h3>
       <div class="row">
         <div class="row-label">
-          <span>水平偏移</span>
-          <span class="val val-pos" id="posXVal">0</span>
+          <span>左右</span>
+          <span class="val val-pos" id="posXVal">0.0</span>
         </div>
-        <input type="range" class="pos" id="posXSlider" min="-4" max="4" value="0" step="0.1">
+        <input type="range" class="pos" id="posX" min="-5" max="5" value="0" step="0.1">
       </div>
       <div class="row">
         <div class="row-label">
-          <span>垂直偏移</span>
-          <span class="val val-pos" id="posYVal">0</span>
+          <span>上下</span>
+          <span class="val val-pos" id="posYVal">0.0</span>
         </div>
-        <input type="range" class="pos" id="posYSlider" min="-3" max="3" value="0" step="0.1">
+        <input type="range" class="pos" id="posY" min="-4" max="4" value="0" step="0.1">
+      </div>
+      <div class="row">
+        <div class="row-label">
+          <span>遠近</span>
+          <span class="val val-pos" id="posZVal">0.0</span>
+        </div>
+        <input type="range" class="pos" id="posZ" min="-5" max="5" value="0" step="0.1">
       </div>
       <button class="reset-btn" id="resetBtn">全部重設</button>
     </div>
@@ -205,7 +208,7 @@
   <div id="gizmo-label">拖曳旋轉方塊</div>
 
   <div id="hint">
-    🖱 拖曳旋轉長方形 · 滾輪縮放 · 右鍵平移<br>
+    拖曳畫面旋轉 · 拖曳虛線調整視平/視垂 · 滾輪縮放<br>
     📱 單指旋轉 · 雙指縮放
   </div>
 
@@ -221,13 +224,11 @@
   <script type="module">
     import * as THREE from 'three';
 
-    // ── Main scene ─────────────────────────────────────────────────
+    // ── Scene setup ────────────────────────────────────────────────
     const scene = new THREE.Scene();
-    const CAM_DIST = 6;
-    const FOV = 40;
+    const FOV = 40, CAM_Z = 6;
     const camera = new THREE.PerspectiveCamera(FOV, innerWidth / innerHeight, 0.1, 100);
-    camera.position.set(0, 0, CAM_DIST);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0, CAM_Z);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(devicePixelRatio);
@@ -235,10 +236,9 @@
     renderer.setClearColor(0x0f0f1a);
     document.body.appendChild(renderer.domElement);
 
-    // ── Rectangle group (position + rotation) ──────────────────────
+    // ── Rectangle group ────────────────────────────────────────────
     const rectGroup = new THREE.Group();
     scene.add(rectGroup);
-
     const W = 4.8, H = 3.0;
 
     rectGroup.add(new THREE.Mesh(
@@ -247,283 +247,232 @@
     ));
 
     // Border
-    const borderPts = [
-      [-W/2, -H/2], [W/2, -H/2], [W/2, H/2], [-W/2, H/2], [-W/2, -H/2]
-    ].map(([x, y]) => new THREE.Vector3(x, y, 0.002));
+    const bPts = [[-W/2,-H/2],[W/2,-H/2],[W/2,H/2],[-W/2,H/2],[-W/2,-H/2]]
+      .map(([x,y]) => new THREE.Vector3(x, y, 0.002));
     rectGroup.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(borderPts),
+      new THREE.BufferGeometry().setFromPoints(bPts),
       new THREE.LineBasicMaterial({ color: 0x888888 })
     ));
 
-    // ── Dividing lines ─────────────────────────────────────────────
-    const hGroup = new THREE.Group();
-    const vGroup = new THREE.Group();
+    // Dividing lines
+    const hGroup = new THREE.Group(), vGroup = new THREE.Group();
     rectGroup.add(hGroup, vGroup);
 
-    function buildLines(hCount, vCount) {
-      hGroup.clear();
-      vGroup.clear();
-      const hMat = new THREE.LineBasicMaterial({ color: 0xff9999 });
-      for (let i = 1; i <= hCount; i++) {
-        const y = -H/2 + H * i / (hCount + 1);
-        hGroup.add(new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-W/2, y, 0.003), new THREE.Vector3(W/2, y, 0.003),
-          ]), hMat
-        ));
+    function buildLines(hN, vN) {
+      hGroup.clear(); vGroup.clear();
+      const hM = new THREE.LineBasicMaterial({ color: 0xff9999 });
+      for (let i = 1; i <= hN; i++) {
+        const y = -H/2 + H * i / (hN + 1);
+        hGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-W/2, y, 0.003), new THREE.Vector3(W/2, y, 0.003),
+        ]), hM));
       }
-      const vMat = new THREE.LineBasicMaterial({ color: 0x88aaff });
-      for (let i = 1; i <= vCount; i++) {
-        const x = -W/2 + W * i / (vCount + 1);
-        vGroup.add(new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(x, -H/2, 0.003), new THREE.Vector3(x, H/2, 0.003),
-          ]), vMat
-        ));
+      const vM = new THREE.LineBasicMaterial({ color: 0x88aaff });
+      for (let i = 1; i <= vN; i++) {
+        const x = -W/2 + W * i / (vN + 1);
+        vGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, -H/2, 0.003), new THREE.Vector3(x, H/2, 0.003),
+        ]), vM));
       }
     }
     buildLines(2, 2);
 
     // Background grid
     const grid = new THREE.GridHelper(20, 20, 0x1e1e30, 0x1a1a28);
-    grid.rotation.x = Math.PI / 2;
-    grid.position.z = -0.5;
+    grid.rotation.x = Math.PI / 2; grid.position.z = -0.5;
     scene.add(grid);
 
-    // ── Mouse drag → rotate rectangle ──────────────────────────────
-    let dragging = false, lastX = 0, lastY = 0;
+    // ── Drag to rotate rectangle ───────────────────────────────────
     const rotQuat = new THREE.Quaternion();
-    const tempQuat = new THREE.Quaternion();
-    const axisX = new THREE.Vector3(1, 0, 0);
-    const axisY = new THREE.Vector3(0, 1, 0);
+    const tmpQ = new THREE.Quaternion();
+    const AX = new THREE.Vector3(1,0,0), AY = new THREE.Vector3(0,1,0);
+    let rotating = false, rLastX = 0, rLastY = 0;
 
     renderer.domElement.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return; // left button only
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
+      if (e.button !== 0) return;
+      rotating = true; rLastX = e.clientX; rLastY = e.clientY;
       renderer.domElement.setPointerCapture(e.pointerId);
     });
     renderer.domElement.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      const speed = 0.005;
-      tempQuat.setFromAxisAngle(axisY, dx * speed);
-      rotQuat.premultiply(tempQuat);
-      tempQuat.setFromAxisAngle(axisX, dy * speed);
-      rotQuat.premultiply(tempQuat);
+      if (!rotating) return;
+      const dx = e.clientX - rLastX, dy = e.clientY - rLastY;
+      rLastX = e.clientX; rLastY = e.clientY;
+      const s = 0.005;
+      tmpQ.setFromAxisAngle(AY, dx * s); rotQuat.premultiply(tmpQ);
+      tmpQ.setFromAxisAngle(AX, dy * s); rotQuat.premultiply(tmpQ);
       rectGroup.quaternion.copy(rotQuat);
     });
-    renderer.domElement.addEventListener('pointerup', () => { dragging = false; });
-    renderer.domElement.addEventListener('pointercancel', () => { dragging = false; });
+    renderer.domElement.addEventListener('pointerup', () => { rotating = false; });
+    renderer.domElement.addEventListener('pointercancel', () => { rotating = false; });
 
-    // Scroll → zoom (move camera closer/further)
+    // Scroll → zoom
     renderer.domElement.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const z = camera.position.z + e.deltaY * 0.005;
-      camera.position.z = Math.max(1.5, Math.min(18, z));
-      updateCameraTarget();
+      camera.position.z = Math.max(1.5, Math.min(18, camera.position.z + e.deltaY * 0.005));
+      updateCamera();
     }, { passive: false });
 
-    // ── Gizmo ──────────────────────────────────────────────────────
-    const gizmoCanvas = document.getElementById('gizmo');
-    const gizmoSize = 120;
-    gizmoCanvas.width = gizmoSize * devicePixelRatio;
-    gizmoCanvas.height = gizmoSize * devicePixelRatio;
-    gizmoCanvas.style.width = gizmoSize + 'px';
-    gizmoCanvas.style.height = gizmoSize + 'px';
+    // ── Draggable HL/VL reference lines ────────────────────────────
+    let hlPct = 50, vlPct = 50; // screen position as %
 
-    const gScene = new THREE.Scene();
-    const gCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-    gCamera.position.set(0, 0, 4);
-    gCamera.lookAt(0, 0, 0);
-    const gRenderer = new THREE.WebGLRenderer({ canvas: gizmoCanvas, antialias: true, alpha: true });
-    gRenderer.setPixelRatio(devicePixelRatio);
-    gRenderer.setSize(gizmoSize, gizmoSize);
-    gRenderer.setClearColor(0x000000, 0);
-
-    // Gizmo cube
-    const cubeGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
-    gScene.add(new THREE.Mesh(cubeGeo, new THREE.MeshBasicMaterial({
-      color: 0x333355, transparent: true, opacity: 0.3,
-    })));
-    gScene.add(new THREE.LineSegments(
-      new THREE.EdgesGeometry(cubeGeo),
-      new THREE.LineBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.5 })
-    ));
-
-    // Axis lines in gizmo
-    const axisLen = 1.2;
-    for (const { dir, color } of [
-      { dir: [1,0,0], color: 0xff6666 },
-      { dir: [0,1,0], color: 0x66ff66 },
-      { dir: [0,0,1], color: 0x6688ff },
-    ]) {
-      gScene.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0,0,0),
-          new THREE.Vector3(dir[0]*axisLen, dir[1]*axisLen, dir[2]*axisLen),
-        ]),
-        new THREE.LineBasicMaterial({ color })
-      ));
-      const tip = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 8, 8),
-        new THREE.MeshBasicMaterial({ color })
-      );
-      tip.position.set(dir[0]*axisLen, dir[1]*axisLen, dir[2]*axisLen);
-      gScene.add(tip);
-    }
-
-    // Gizmo cube mirrors rectGroup rotation
-    const gizmoGroup = new THREE.Group();
-    gScene.children.forEach(c => {
-      gScene.remove(c);
-      gizmoGroup.add(c);
-    });
-    gScene.add(gizmoGroup);
-
-    // Gizmo drag → also rotates the rectangle
-    let gizmoDrag = false, gLastX = 0, gLastY = 0;
-    gizmoCanvas.addEventListener('pointerdown', (e) => {
-      gizmoDrag = true;
-      gLastX = e.clientX;
-      gLastY = e.clientY;
-      gizmoCanvas.setPointerCapture(e.pointerId);
-    });
-    window.addEventListener('pointermove', (e) => {
-      if (!gizmoDrag) return;
-      const dx = e.clientX - gLastX;
-      const dy = e.clientY - gLastY;
-      gLastX = e.clientX;
-      gLastY = e.clientY;
-      const speed = 0.008;
-      tempQuat.setFromAxisAngle(axisY, dx * speed);
-      rotQuat.premultiply(tempQuat);
-      tempQuat.setFromAxisAngle(axisX, dy * speed);
-      rotQuat.premultiply(tempQuat);
-      rectGroup.quaternion.copy(rotQuat);
-    });
-    window.addEventListener('pointerup', () => { gizmoDrag = false; });
-
-    // ── Camera target (HL/VL projection) ───────────────────────────
-    // HL/VL sliders set where on screen the camera's aim point lands.
-    // We shift the camera lookAt target to achieve this.
-    let hlPct = 50, vlPct = 50;
-
-    function updateCameraTarget() {
-      // Convert screen % to world-space offset at z=0
-      const halfFovRad = THREE.MathUtils.degToRad(FOV / 2);
-      const dist = camera.position.z;
-      const visH = 2 * dist * Math.tan(halfFovRad);
-      const visW = visH * camera.aspect;
-      // Offset: 50% = center, lower % = shift target up, etc.
-      const tx = (vlPct - 50) / 50 * (visW / 2) * 0.8;
-      const ty = -(hlPct - 50) / 50 * (visH / 2) * 0.8;
-      camera.lookAt(tx, ty, 0);
-      camera.updateProjectionMatrix();
-    }
-
-    // ── 2D reference lines ─────────────────────────────────────────
+    const horizonHit = document.getElementById('horizon-hit');
+    const verticalHit = document.getElementById('vertical-hit');
     const horizonEl = document.getElementById('horizon-line');
     const verticalEl = document.getElementById('vertical-line');
-    const horizonLabelEl = document.getElementById('horizon-label');
-    const verticalLabelEl = document.getElementById('vertical-label');
+    const horizonLabel = document.getElementById('horizon-label');
+    const verticalLabel = document.getElementById('vertical-label');
 
-    function positionRefLines() {
+    function layoutRefLines() {
       const y = innerHeight * hlPct / 100;
       const x = innerWidth * vlPct / 100;
+      horizonHit.style.top = y + 'px';
       horizonEl.style.top = y + 'px';
+      horizonLabel.style.top = (y - 16) + 'px';
+      horizonLabel.style.right = '145px';
+      verticalHit.style.left = x + 'px';
       verticalEl.style.left = x + 'px';
-      horizonLabelEl.style.top = (y - 16) + 'px';
-      horizonLabelEl.style.right = '145px';
-      verticalLabelEl.style.left = (x + 6) + 'px';
-      verticalLabelEl.style.top = '20px';
+      verticalLabel.style.left = (x + 6) + 'px';
+      verticalLabel.style.top = '20px';
     }
 
-    // ── UI wiring ──────────────────────────────────────────────────
-    const hSlider = document.getElementById('hLines');
-    const vSlider = document.getElementById('vLines');
-    const hValEl = document.getElementById('hVal');
-    const vValEl = document.getElementById('vVal');
+    function updateCamera() {
+      const halfTan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+      const dist = camera.position.z;
+      const visH = 2 * dist * halfTan;
+      const visW = visH * camera.aspect;
+      const tx = (vlPct - 50) / 50 * (visW / 2) * 0.85;
+      const ty = -(hlPct - 50) / 50 * (visH / 2) * 0.85;
+      camera.lookAt(tx, ty, 0);
+    }
 
-    hSlider.addEventListener('input', () => {
-      hValEl.textContent = hSlider.value;
-      buildLines(+hSlider.value, +vSlider.value);
+    // HL drag
+    let hlDrag = false;
+    horizonHit.addEventListener('pointerdown', (e) => {
+      hlDrag = true; horizonHit.classList.add('dragging');
+      horizonHit.setPointerCapture(e.pointerId);
+      e.stopPropagation();
     });
-    vSlider.addEventListener('input', () => {
-      vValEl.textContent = vSlider.value;
-      buildLines(+hSlider.value, +vSlider.value);
+    window.addEventListener('pointermove', (e) => {
+      if (!hlDrag) return;
+      hlPct = Math.max(5, Math.min(95, e.clientY / innerHeight * 100));
+      layoutRefLines(); updateCamera();
     });
-
-    const hlSlider = document.getElementById('hlSlider');
-    const vlSlider = document.getElementById('vlSlider');
-    const hlValEl = document.getElementById('hlVal');
-    const vlValEl = document.getElementById('vlVal');
-
-    hlSlider.addEventListener('input', () => {
-      hlPct = +hlSlider.value;
-      hlValEl.textContent = hlPct + '%';
-      positionRefLines();
-      updateCameraTarget();
-    });
-    vlSlider.addEventListener('input', () => {
-      vlPct = +vlSlider.value;
-      vlValEl.textContent = vlPct + '%';
-      positionRefLines();
-      updateCameraTarget();
+    window.addEventListener('pointerup', () => {
+      if (hlDrag) { hlDrag = false; horizonHit.classList.remove('dragging'); }
     });
 
-    const posXSlider = document.getElementById('posXSlider');
-    const posYSlider = document.getElementById('posYSlider');
-    const posXVal = document.getElementById('posXVal');
-    const posYVal = document.getElementById('posYVal');
-
-    posXSlider.addEventListener('input', () => {
-      posXVal.textContent = (+posXSlider.value).toFixed(1);
-      rectGroup.position.x = +posXSlider.value;
+    // VL drag
+    let vlDrag = false;
+    verticalHit.addEventListener('pointerdown', (e) => {
+      vlDrag = true; verticalHit.classList.add('dragging');
+      verticalHit.setPointerCapture(e.pointerId);
+      e.stopPropagation();
     });
-    posYSlider.addEventListener('input', () => {
-      posYVal.textContent = (+posYSlider.value).toFixed(1);
-      rectGroup.position.y = +posYSlider.value;
+    window.addEventListener('pointermove', (e) => {
+      if (!vlDrag) return;
+      vlPct = Math.max(5, Math.min(95, e.clientX / innerWidth * 100));
+      layoutRefLines(); updateCamera();
+    });
+    window.addEventListener('pointerup', () => {
+      if (vlDrag) { vlDrag = false; verticalHit.classList.remove('dragging'); }
     });
 
-    document.getElementById('resetBtn').addEventListener('click', () => {
+    // ── Gizmo ──────────────────────────────────────────────────────
+    const gc = document.getElementById('gizmo');
+    const GS = 120;
+    gc.width = GS * devicePixelRatio; gc.height = GS * devicePixelRatio;
+    gc.style.width = GS + 'px'; gc.style.height = GS + 'px';
+
+    const gScene = new THREE.Scene();
+    const gCam = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    gCam.position.set(0, 0, 4); gCam.lookAt(0, 0, 0);
+    const gR = new THREE.WebGLRenderer({ canvas: gc, antialias: true, alpha: true });
+    gR.setPixelRatio(devicePixelRatio); gR.setSize(GS, GS); gR.setClearColor(0, 0);
+
+    const gGroup = new THREE.Group();
+    gScene.add(gGroup);
+
+    // Cube
+    const cg = new THREE.BoxGeometry(1.4, 1.4, 1.4);
+    gGroup.add(new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: 0x333355, transparent: true, opacity: 0.3 })));
+    gGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(cg), new THREE.LineBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.5 })));
+
+    // Axes
+    for (const { d, c } of [
+      { d: [1,0,0], c: 0xff6666 }, { d: [0,1,0], c: 0x66ff66 }, { d: [0,0,1], c: 0x6688ff },
+    ]) {
+      const L = 1.2;
+      gGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(d[0]*L, d[1]*L, d[2]*L)]),
+        new THREE.LineBasicMaterial({ color: c })
+      ));
+      const t = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: c }));
+      t.position.set(d[0]*L, d[1]*L, d[2]*L);
+      gGroup.add(t);
+    }
+
+    // Gizmo drag → rotate rectangle
+    let gDrag = false, gLX = 0, gLY = 0;
+    gc.addEventListener('pointerdown', (e) => {
+      gDrag = true; gLX = e.clientX; gLY = e.clientY;
+      gc.setPointerCapture(e.pointerId);
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!gDrag) return;
+      const dx = e.clientX - gLX, dy = e.clientY - gLY;
+      gLX = e.clientX; gLY = e.clientY;
+      const s = 0.008;
+      tmpQ.setFromAxisAngle(AY, dx * s); rotQuat.premultiply(tmpQ);
+      tmpQ.setFromAxisAngle(AX, dy * s); rotQuat.premultiply(tmpQ);
+      rectGroup.quaternion.copy(rotQuat);
+    });
+    window.addEventListener('pointerup', () => { gDrag = false; });
+
+    // ── UI: sliders ────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    // Line counts
+    const hSlider = $('hLines'), vSlider = $('vLines');
+    hSlider.addEventListener('input', () => { $('hVal').textContent = hSlider.value; buildLines(+hSlider.value, +vSlider.value); });
+    vSlider.addEventListener('input', () => { $('vVal').textContent = vSlider.value; buildLines(+hSlider.value, +vSlider.value); });
+
+    // Position sliders
+    for (const [axis, prop] of [['posX', 'x'], ['posY', 'y'], ['posZ', 'z']]) {
+      const sl = $(axis);
+      sl.addEventListener('input', () => {
+        $(axis + 'Val').textContent = (+sl.value).toFixed(1);
+        rectGroup.position[prop] = +sl.value;
+      });
+    }
+
+    // Reset
+    $('resetBtn').addEventListener('click', () => {
       hlPct = 50; vlPct = 50;
-      hlSlider.value = 50; vlSlider.value = 50;
-      hlValEl.textContent = '50%'; vlValEl.textContent = '50%';
-      posXSlider.value = 0; posYSlider.value = 0;
-      posXVal.textContent = '0'; posYVal.textContent = '0';
+      rotQuat.identity(); rectGroup.quaternion.identity();
       rectGroup.position.set(0, 0, 0);
-      rotQuat.identity();
-      rectGroup.quaternion.identity();
-      camera.position.z = CAM_DIST;
-      positionRefLines();
-      updateCameraTarget();
+      camera.position.z = CAM_Z;
+      for (const id of ['posX', 'posY', 'posZ']) {
+        $(id).value = 0; $(id + 'Val').textContent = '0.0';
+      }
+      layoutRefLines(); updateCamera();
     });
 
-    // Init
-    positionRefLines();
-    updateCameraTarget();
+    // ── Init + resize ──────────────────────────────────────────────
+    layoutRefLines(); updateCamera();
 
-    // ── Resize ─────────────────────────────────────────────────────
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
-      positionRefLines();
-      updateCameraTarget();
+      layoutRefLines(); updateCamera();
     });
 
     // ── Render loop ────────────────────────────────────────────────
     (function animate() {
       requestAnimationFrame(animate);
-      // Sync gizmo cube with rectangle rotation
-      gizmoGroup.quaternion.copy(rectGroup.quaternion);
+      gGroup.quaternion.copy(rectGroup.quaternion);
       renderer.render(scene, camera);
-      gRenderer.render(gScene, gCamera);
+      gR.render(gScene, gCam);
     })();
   </script>
 </body>
