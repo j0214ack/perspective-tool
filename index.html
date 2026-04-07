@@ -12,6 +12,8 @@
       overflow: hidden;
       height: 100vh;
     }
+
+    /* ── Left panel ─────────────────────────────────────── */
     #panel {
       position: fixed;
       top: 20px;
@@ -23,7 +25,7 @@
       border-radius: 14px;
       padding: 18px 22px;
       color: #ddd;
-      min-width: 210px;
+      min-width: 220px;
       z-index: 10;
     }
     #panel h2 {
@@ -35,38 +37,38 @@
     #panel .subtitle {
       font-size: 11px;
       color: #444;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       line-height: 1.5;
     }
     #panel h3 {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: #555;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
-    .row {
-      margin-bottom: 16px;
-    }
+    .section { margin-bottom: 18px; }
+    .row { margin-bottom: 14px; }
     .row:last-child { margin-bottom: 0; }
     .row-label {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .row-label span:first-child {
       font-size: 13px;
       color: #aaa;
     }
     .val {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
     .val-h { color: #ffaaaa; }
     .val-v { color: #99bbff; }
+    .val-angle { color: #aaa; font-size: 13px; }
 
     input[type=range] {
       -webkit-appearance: none;
@@ -93,6 +95,13 @@
       cursor: pointer;
       box-shadow: 0 0 6px rgba(100,150,255,0.4);
     }
+    input[type=range].angle::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: #999;
+      cursor: pointer;
+    }
     input[type=range]::-moz-range-thumb {
       width: 15px; height: 15px;
       border: none;
@@ -101,23 +110,11 @@
     }
     input[type=range].h::-moz-range-thumb { background: #ffaaaa; }
     input[type=range].v::-moz-range-thumb { background: #99bbff; }
+    input[type=range].angle::-moz-range-thumb { background: #999; width: 13px; height: 13px; }
 
-    #hint {
-      position: fixed;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.2);
-      font-size: 12px;
-      pointer-events: none;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-      text-align: center;
-    }
     .legend {
       display: flex;
       gap: 14px;
-      margin-top: 14px;
       padding-top: 14px;
       border-top: 1px solid rgba(255,255,255,0.06);
     }
@@ -133,28 +130,144 @@
       height: 2px;
       border-radius: 1px;
     }
+
+    .reset-btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: #777;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .reset-btn:hover {
+      color: #bbb;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ── Rotation widget (top-right) ────────────────────── */
+    #gizmo {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 120px;
+      height: 120px;
+      z-index: 10;
+      cursor: grab;
+    }
+    #gizmo:active { cursor: grabbing; }
+    #gizmo-label {
+      position: fixed;
+      top: 145px;
+      right: 20px;
+      width: 120px;
+      text-align: center;
+      font-size: 10px;
+      color: rgba(255,255,255,0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* ── Hint ───────────────────────────────────────────── */
+    #hint {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.2);
+      font-size: 12px;
+      pointer-events: none;
+      letter-spacing: 0.04em;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── Horizon / vertical reference lines (2D overlay) ── */
+    .ref-line {
+      position: fixed;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #horizon-line {
+      left: 0; right: 0;
+      height: 1px;
+      background: rgba(255, 170, 170, 0.18);
+      border-top: 1px dashed rgba(255, 170, 170, 0.25);
+    }
+    #vertical-line {
+      top: 0; bottom: 0;
+      width: 1px;
+      background: rgba(136, 170, 255, 0.18);
+      border-left: 1px dashed rgba(136, 170, 255, 0.25);
+    }
+    .ref-label {
+      position: fixed;
+      font-size: 10px;
+      pointer-events: none;
+      z-index: 6;
+      letter-spacing: 0.05em;
+    }
+    #horizon-label {
+      color: rgba(255, 170, 170, 0.4);
+      right: 145px;
+    }
+    #vertical-label {
+      color: rgba(136, 170, 255, 0.4);
+    }
   </style>
 </head>
 <body>
 
+  <!-- 2D reference lines -->
+  <div id="horizon-line" class="ref-line"></div>
+  <div id="vertical-line" class="ref-line"></div>
+  <span id="horizon-label" class="ref-label">視平線 HL</span>
+  <span id="vertical-label" class="ref-label">視垂線 VL</span>
+
   <div id="panel">
     <h2>透視學習工具</h2>
     <p class="subtitle">旋轉長方形，觀察平行線<br>在不同視角下的透視變化</p>
-    <h3>分割線數量</h3>
-    <div class="row">
-      <div class="row-label">
-        <span>水平方向</span>
-        <span class="val val-h" id="hVal">1</span>
+
+    <div class="section">
+      <h3>分割線數量</h3>
+      <div class="row">
+        <div class="row-label">
+          <span>水平方向</span>
+          <span class="val val-h" id="hVal">2</span>
+        </div>
+        <input type="range" class="h" id="hLines" min="0" max="12" value="2">
       </div>
-      <input type="range" class="h" id="hLines" min="0" max="12" value="1">
-    </div>
-    <div class="row">
-      <div class="row-label">
-        <span>垂直方向</span>
-        <span class="val val-v" id="vVal">1</span>
+      <div class="row">
+        <div class="row-label">
+          <span>垂直方向</span>
+          <span class="val val-v" id="vVal">2</span>
+        </div>
+        <input type="range" class="v" id="vLines" min="0" max="12" value="2">
       </div>
-      <input type="range" class="v" id="vLines" min="0" max="12" value="1">
     </div>
+
+    <div class="section">
+      <h3>視線角度</h3>
+      <div class="row">
+        <div class="row-label">
+          <span>視平線（上下）</span>
+          <span class="val val-angle" id="hlVal">0°</span>
+        </div>
+        <input type="range" class="angle" id="hlSlider" min="-60" max="60" value="0" step="1">
+      </div>
+      <div class="row">
+        <div class="row-label">
+          <span>視垂線（左右）</span>
+          <span class="val val-angle" id="vlVal">0°</span>
+        </div>
+        <input type="range" class="angle" id="vlSlider" min="-80" max="80" value="0" step="1">
+      </div>
+      <button class="reset-btn" id="resetBtn">重設角度</button>
+    </div>
+
     <div class="legend">
       <div class="legend-item">
         <div class="legend-swatch" style="background:#ff9999"></div>
@@ -166,6 +279,10 @@
       </div>
     </div>
   </div>
+
+  <!-- Rotation gizmo canvas -->
+  <canvas id="gizmo"></canvas>
+  <div id="gizmo-label">拖曳旋轉方塊</div>
 
   <div id="hint">
     🖱 拖曳旋轉 · 滾輪縮放 · 右鍵平移<br>
@@ -185,9 +302,8 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // ── Scene ──────────────────────────────────────────────────────
+    // ── Main scene ─────────────────────────────────────────────────
     const scene = new THREE.Scene();
-
     const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(0, 0.3, 6);
 
@@ -203,67 +319,185 @@
     controls.minDistance = 1.5;
     controls.maxDistance = 18;
 
-    // ── Rectangle dimensions ───────────────────────────────────────
+    // ── Rectangle ──────────────────────────────────────────────────
     const W = 4.8, H = 3.0;
 
-    // ── Plane (the rectangle face) ─────────────────────────────────
-    const planeMat = new THREE.MeshBasicMaterial({
-      color: 0xf4ede0,
-      side: THREE.DoubleSide,
-    });
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, H), planeMat);
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, H),
+      new THREE.MeshBasicMaterial({ color: 0xf4ede0, side: THREE.DoubleSide })
+    );
     scene.add(plane);
 
-    // ── Border ─────────────────────────────────────────────────────
+    // Border
     const borderPts = [
       [-W/2, -H/2], [W/2, -H/2], [W/2, H/2], [-W/2, H/2], [-W/2, -H/2]
     ].map(([x, y]) => new THREE.Vector3(x, y, 0.002));
-    const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPts);
-    scene.add(new THREE.Line(borderGeo, new THREE.LineBasicMaterial({ color: 0x888888 })));
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(borderPts),
+      new THREE.LineBasicMaterial({ color: 0x888888 })
+    ));
 
-    // ── Dividing lines groups ──────────────────────────────────────
+    // ── Dividing lines ─────────────────────────────────────────────
     const hGroup = new THREE.Group();
     const vGroup = new THREE.Group();
     scene.add(hGroup, vGroup);
 
-    const H_COLOR = 0xff9999; // light red
-    const V_COLOR = 0x88aaff; // light blue
-
     function buildLines(hCount, vCount) {
       hGroup.clear();
       vGroup.clear();
-
-      const hMat = new THREE.LineBasicMaterial({ color: H_COLOR });
+      const hMat = new THREE.LineBasicMaterial({ color: 0xff9999 });
       for (let i = 1; i <= hCount; i++) {
-        const y = -H / 2 + H * i / (hCount + 1);
-        const geo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-W / 2, y, 0.003),
-          new THREE.Vector3( W / 2, y, 0.003),
-        ]);
-        hGroup.add(new THREE.Line(geo, hMat));
+        const y = -H/2 + H * i / (hCount + 1);
+        hGroup.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-W/2, y, 0.003),
+            new THREE.Vector3( W/2, y, 0.003),
+          ]), hMat
+        ));
       }
-
-      const vMat = new THREE.LineBasicMaterial({ color: V_COLOR });
+      const vMat = new THREE.LineBasicMaterial({ color: 0x88aaff });
       for (let i = 1; i <= vCount; i++) {
-        const x = -W / 2 + W * i / (vCount + 1);
-        const geo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x, -H / 2, 0.003),
-          new THREE.Vector3(x,  H / 2, 0.003),
-        ]);
-        vGroup.add(new THREE.Line(geo, vMat));
+        const x = -W/2 + W * i / (vCount + 1);
+        vGroup.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x, -H/2, 0.003),
+            new THREE.Vector3(x,  H/2, 0.003),
+          ]), vMat
+        ));
       }
     }
 
-    // ── Subtle background grid for depth reference ─────────────────
-    const gridHelper = new THREE.GridHelper(20, 20, 0x1e1e30, 0x1a1a28);
-    gridHelper.rotation.x = Math.PI / 2;
-    gridHelper.position.z = -0.5;
-    scene.add(gridHelper);
+    // Background grid
+    const grid = new THREE.GridHelper(20, 20, 0x1e1e30, 0x1a1a28);
+    grid.rotation.x = Math.PI / 2;
+    grid.position.z = -0.5;
+    scene.add(grid);
 
-    // ── Init ───────────────────────────────────────────────────────
-    buildLines(1, 1);
+    buildLines(2, 2);
 
-    // ── UI ────────────────────────────────────────────────────────
+    // ── Gizmo (rotation widget) ────────────────────────────────────
+    const gizmoCanvas = document.getElementById('gizmo');
+    const gizmoSize = 120;
+    gizmoCanvas.width = gizmoSize * devicePixelRatio;
+    gizmoCanvas.height = gizmoSize * devicePixelRatio;
+    gizmoCanvas.style.width = gizmoSize + 'px';
+    gizmoCanvas.style.height = gizmoSize + 'px';
+
+    const gScene = new THREE.Scene();
+    const gCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    const gRenderer = new THREE.WebGLRenderer({ canvas: gizmoCanvas, antialias: true, alpha: true });
+    gRenderer.setPixelRatio(devicePixelRatio);
+    gRenderer.setSize(gizmoSize, gizmoSize);
+    gRenderer.setClearColor(0x000000, 0);
+
+    // Cube wireframe with face labels
+    const cubeGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
+    const cubeMat = new THREE.MeshBasicMaterial({
+      color: 0x333355,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const cube = new THREE.Mesh(cubeGeo, cubeMat);
+    gScene.add(cube);
+
+    const edgesGeo = new THREE.EdgesGeometry(cubeGeo);
+    const edgesMat = new THREE.LineBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.5 });
+    gScene.add(new THREE.LineSegments(edgesGeo, edgesMat));
+
+    // Axis arrows
+    const axisLen = 1.2;
+    const axes = [
+      { dir: [1,0,0], color: 0xff6666, label: 'X' },
+      { dir: [0,1,0], color: 0x66ff66, label: 'Y' },
+      { dir: [0,0,1], color: 0x6688ff, label: 'Z' },
+    ];
+    for (const { dir, color } of axes) {
+      const pts = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(dir[0] * axisLen, dir[1] * axisLen, dir[2] * axisLen),
+      ];
+      gScene.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color })
+      ));
+      // Axis tip sphere
+      const tip = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 8, 8),
+        new THREE.MeshBasicMaterial({ color })
+      );
+      tip.position.set(dir[0] * axisLen, dir[1] * axisLen, dir[2] * axisLen);
+      gScene.add(tip);
+    }
+
+    // Gizmo follows main camera orientation
+    function updateGizmo() {
+      const dist = 4;
+      gCamera.position.copy(camera.position).normalize().multiplyScalar(dist);
+      gCamera.lookAt(0, 0, 0);
+    }
+
+    // Gizmo drag to rotate main camera
+    let gizmoDragging = false;
+    let gizmoLastX = 0, gizmoLastY = 0;
+
+    gizmoCanvas.addEventListener('pointerdown', (e) => {
+      gizmoDragging = true;
+      gizmoLastX = e.clientX;
+      gizmoLastY = e.clientY;
+      gizmoCanvas.setPointerCapture(e.pointerId);
+      controls.enabled = false;
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!gizmoDragging) return;
+      const dx = e.clientX - gizmoLastX;
+      const dy = e.clientY - gizmoLastY;
+      gizmoLastX = e.clientX;
+      gizmoLastY = e.clientY;
+      // Rotate orbit: dx → azimuthal, dy → polar
+      const speed = 0.008;
+      controls.enabled = true;
+      const azimuth = controls.getAzimuthalAngle() - dx * speed;
+      const polar = controls.getPolarAngle() + dy * speed;
+      const r = camera.position.distanceTo(controls.target);
+      const clampedPolar = Math.max(0.05, Math.min(Math.PI - 0.05, polar));
+      camera.position.set(
+        controls.target.x + r * Math.sin(clampedPolar) * Math.sin(azimuth),
+        controls.target.y + r * Math.cos(clampedPolar),
+        controls.target.z + r * Math.sin(clampedPolar) * Math.cos(azimuth)
+      );
+      camera.lookAt(controls.target);
+      controls.update();
+      controls.enabled = false;
+      syncSlidersFromCamera();
+    });
+    window.addEventListener('pointerup', () => {
+      if (gizmoDragging) {
+        gizmoDragging = false;
+        controls.enabled = true;
+      }
+    });
+
+    // ── 2D reference lines ─────────────────────────────────────────
+    const horizonEl = document.getElementById('horizon-line');
+    const verticalEl = document.getElementById('vertical-line');
+    const horizonLabelEl = document.getElementById('horizon-label');
+    const verticalLabelEl = document.getElementById('vertical-label');
+
+    function updateRefLines() {
+      // Project center of rectangle to screen
+      const center = new THREE.Vector3(0, 0, 0);
+      center.project(camera);
+      const cx = (center.x * 0.5 + 0.5) * innerWidth;
+      const cy = (-center.y * 0.5 + 0.5) * innerHeight;
+
+      horizonEl.style.top = cy + 'px';
+      verticalEl.style.left = cx + 'px';
+      horizonLabelEl.style.top = (cy - 16) + 'px';
+      verticalLabelEl.style.left = (cx + 6) + 'px';
+      verticalLabelEl.style.top = '20px';
+    }
+
+    // ── UI: line count sliders ─────────────────────────────────────
     const hSlider = document.getElementById('hLines');
     const vSlider = document.getElementById('vLines');
     const hValEl  = document.getElementById('hVal');
@@ -278,6 +512,62 @@
       buildLines(+hSlider.value, +vSlider.value);
     });
 
+    // ── UI: angle sliders ──────────────────────────────────────────
+    const hlSlider = document.getElementById('hlSlider');
+    const vlSlider = document.getElementById('vlSlider');
+    const hlValEl  = document.getElementById('hlVal');
+    const vlValEl  = document.getElementById('vlVal');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let sliderDriving = false; // prevent feedback loop
+
+    function setCameraFromSliders() {
+      sliderDriving = true;
+      const pitchDeg = +hlSlider.value;  // HL: negative = look down, positive = look up
+      const yawDeg = +vlSlider.value;    // VL: negative = look left, positive = look right
+
+      hlValEl.textContent = pitchDeg + '°';
+      vlValEl.textContent = yawDeg + '°';
+
+      const r = camera.position.distanceTo(controls.target);
+      const polar = Math.PI / 2 - THREE.MathUtils.degToRad(pitchDeg);
+      const azimuth = THREE.MathUtils.degToRad(yawDeg);
+
+      camera.position.set(
+        controls.target.x + r * Math.sin(polar) * Math.sin(azimuth),
+        controls.target.y + r * Math.cos(polar),
+        controls.target.z + r * Math.sin(polar) * Math.cos(azimuth)
+      );
+      camera.lookAt(controls.target);
+      controls.update();
+      sliderDriving = false;
+    }
+
+    function syncSlidersFromCamera() {
+      if (sliderDriving) return;
+      const polar = controls.getPolarAngle();
+      const azimuth = controls.getAzimuthalAngle();
+      const pitchDeg = Math.round(THREE.MathUtils.radToDeg(Math.PI / 2 - polar));
+      const yawDeg = Math.round(THREE.MathUtils.radToDeg(azimuth));
+
+      hlSlider.value = Math.max(-60, Math.min(60, pitchDeg));
+      vlSlider.value = Math.max(-80, Math.min(80, yawDeg));
+      hlValEl.textContent = pitchDeg + '°';
+      vlValEl.textContent = yawDeg + '°';
+    }
+
+    hlSlider.addEventListener('input', setCameraFromSliders);
+    vlSlider.addEventListener('input', setCameraFromSliders);
+
+    // Sync sliders when user orbit-drags the main view
+    controls.addEventListener('change', syncSlidersFromCamera);
+
+    resetBtn.addEventListener('click', () => {
+      hlSlider.value = 0;
+      vlSlider.value = 0;
+      setCameraFromSliders();
+    });
+
     // ── Resize ────────────────────────────────────────────────────
     window.addEventListener('resize', () => {
       camera.aspect = innerWidth / innerHeight;
@@ -290,6 +580,9 @@
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
+      updateGizmo();
+      gRenderer.render(gScene, gCamera);
+      updateRefLines();
     })();
   </script>
 </body>
