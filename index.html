@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>透視學習工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0f0f1a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    #panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(15, 15, 26, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 18px 22px;
+      color: #ddd;
+      min-width: 210px;
+      z-index: 10;
+    }
+    #panel h3 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      margin-bottom: 18px;
+    }
+    .row {
+      margin-bottom: 16px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .row-label span:first-child {
+      font-size: 13px;
+      color: #aaa;
+    }
+    .val {
+      font-size: 16px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .val-h { color: #ffaaaa; }
+    .val-v { color: #99bbff; }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range].h::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px; height: 15px;
+      border-radius: 50%;
+      background: #ffaaaa;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(255,150,150,0.4);
+    }
+    input[type=range].v::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px; height: 15px;
+      border-radius: 50%;
+      background: #99bbff;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(100,150,255,0.4);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 15px; height: 15px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    input[type=range].h::-moz-range-thumb { background: #ffaaaa; }
+    input[type=range].v::-moz-range-thumb { background: #99bbff; }
+
+    #hint {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.2);
+      font-size: 12px;
+      pointer-events: none;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="panel">
+    <h3>分割線設定</h3>
+    <div class="row">
+      <div class="row-label">
+        <span>水平線</span>
+        <span class="val val-h" id="hVal">1</span>
+      </div>
+      <input type="range" class="h" id="hLines" min="0" max="12" value="1">
+    </div>
+    <div class="row">
+      <div class="row-label">
+        <span>垂直線</span>
+        <span class="val val-v" id="vVal">1</span>
+      </div>
+      <input type="range" class="v" id="vLines" min="0" max="12" value="1">
+    </div>
+  </div>
+
+  <div id="hint">拖曳旋轉 &nbsp;·&nbsp; 滾輪縮放 &nbsp;·&nbsp; 右鍵平移</div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── Scene ──────────────────────────────────────────────────────
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 0.3, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setClearColor(0x0f0f1a);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 18;
+
+    // ── Rectangle dimensions ───────────────────────────────────────
+    const W = 4.8, H = 3.0;
+
+    // ── Plane (the rectangle face) ─────────────────────────────────
+    const planeMat = new THREE.MeshBasicMaterial({
+      color: 0xf4ede0,
+      side: THREE.DoubleSide,
+    });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, H), planeMat);
+    scene.add(plane);
+
+    // ── Border ─────────────────────────────────────────────────────
+    const borderPts = [
+      [-W/2, -H/2], [W/2, -H/2], [W/2, H/2], [-W/2, H/2], [-W/2, -H/2]
+    ].map(([x, y]) => new THREE.Vector3(x, y, 0.002));
+    const borderGeo = new THREE.BufferGeometry().setFromPoints(borderPts);
+    scene.add(new THREE.Line(borderGeo, new THREE.LineBasicMaterial({ color: 0x888888 })));
+
+    // ── Dividing lines groups ──────────────────────────────────────
+    const hGroup = new THREE.Group();
+    const vGroup = new THREE.Group();
+    scene.add(hGroup, vGroup);
+
+    const H_COLOR = 0xff9999; // light red
+    const V_COLOR = 0x88aaff; // light blue
+
+    function buildLines(hCount, vCount) {
+      hGroup.clear();
+      vGroup.clear();
+
+      const hMat = new THREE.LineBasicMaterial({ color: H_COLOR });
+      for (let i = 1; i <= hCount; i++) {
+        const y = -H / 2 + H * i / (hCount + 1);
+        const geo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-W / 2, y, 0.003),
+          new THREE.Vector3( W / 2, y, 0.003),
+        ]);
+        hGroup.add(new THREE.Line(geo, hMat));
+      }
+
+      const vMat = new THREE.LineBasicMaterial({ color: V_COLOR });
+      for (let i = 1; i <= vCount; i++) {
+        const x = -W / 2 + W * i / (vCount + 1);
+        const geo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, -H / 2, 0.003),
+          new THREE.Vector3(x,  H / 2, 0.003),
+        ]);
+        vGroup.add(new THREE.Line(geo, vMat));
+      }
+    }
+
+    // ── Subtle background grid for depth reference ─────────────────
+    const gridHelper = new THREE.GridHelper(20, 20, 0x1e1e30, 0x1a1a28);
+    gridHelper.rotation.x = Math.PI / 2;
+    gridHelper.position.z = -0.5;
+    scene.add(gridHelper);
+
+    // ── Init ───────────────────────────────────────────────────────
+    buildLines(1, 1);
+
+    // ── UI ────────────────────────────────────────────────────────
+    const hSlider = document.getElementById('hLines');
+    const vSlider = document.getElementById('vLines');
+    const hValEl  = document.getElementById('hVal');
+    const vValEl  = document.getElementById('vVal');
+
+    hSlider.addEventListener('input', () => {
+      hValEl.textContent = hSlider.value;
+      buildLines(+hSlider.value, +vSlider.value);
+    });
+    vSlider.addEventListener('input', () => {
+      vValEl.textContent = vSlider.value;
+      buildLines(+hSlider.value, +vSlider.value);
+    });
+
+    // ── Resize ────────────────────────────────────────────────────
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    // ── Render loop ───────────────────────────────────────────────
+    (function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  </script>
+</body>
+</html>
