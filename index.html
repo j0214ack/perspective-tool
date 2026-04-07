@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>透視學習工具</title>
+  <title>透視學習工具 — 平行線與視角</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -25,6 +25,18 @@
       color: #ddd;
       min-width: 210px;
       z-index: 10;
+    }
+    #panel h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ccc;
+      margin-bottom: 4px;
+    }
+    #panel .subtitle {
+      font-size: 11px;
+      color: #444;
+      margin-bottom: 18px;
+      line-height: 1.5;
     }
     #panel h3 {
       font-size: 11px;
@@ -100,30 +112,65 @@
       pointer-events: none;
       letter-spacing: 0.04em;
       white-space: nowrap;
+      text-align: center;
+    }
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #666;
+    }
+    .legend-swatch {
+      width: 20px;
+      height: 2px;
+      border-radius: 1px;
     }
   </style>
 </head>
 <body>
 
   <div id="panel">
-    <h3>分割線設定</h3>
+    <h2>透視學習工具</h2>
+    <p class="subtitle">旋轉長方形，觀察平行線<br>在不同視角下的透視變化</p>
+    <h3>分割線數量</h3>
     <div class="row">
       <div class="row-label">
-        <span>水平線</span>
+        <span>水平方向</span>
         <span class="val val-h" id="hVal">1</span>
       </div>
       <input type="range" class="h" id="hLines" min="0" max="12" value="1">
     </div>
     <div class="row">
       <div class="row-label">
-        <span>垂直線</span>
+        <span>垂直方向</span>
         <span class="val val-v" id="vVal">1</span>
       </div>
       <input type="range" class="v" id="vLines" min="0" max="12" value="1">
     </div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#ff9999"></div>
+        水平線（紅）
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#88aaff"></div>
+        垂直線（藍）
+      </div>
+    </div>
   </div>
 
-  <div id="hint">拖曳旋轉 &nbsp;·&nbsp; 滾輪縮放 &nbsp;·&nbsp; 右鍵平移</div>
+  <div id="hint">
+    🖱 拖曳旋轉 · 滾輪縮放 · 右鍵平移<br>
+    📱 單指旋轉 · 雙指縮放
+  </div>
 
   <script type="importmap">
   {
