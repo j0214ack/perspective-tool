@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>透視學習工具 — 平行線與視角</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box;
+        -webkit-user-select: none; user-select: none;
+        -webkit-touch-callout: none; }
     body {
       background: #0f0f1a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       overflow: hidden;
       height: 100vh;
+      touch-action: none;
     }
 
     /* ── Left panel ─────────────────────────────────────── */
@@ -76,6 +79,27 @@
       border-radius: 6px; cursor: pointer; transition: all 0.15s;
     }
     .reset-btn:hover { color: #bbb; background: rgba(255,255,255,0.1); }
+
+    /* ── Mobile: collapsible panel ──────────────────────── */
+    #panel-toggle {
+      display: none; position: fixed; top: 16px; left: 16px;
+      width: 40px; height: 40px; z-index: 12;
+      background: rgba(15, 15, 26, 0.8); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; color: #aaa; font-size: 20px;
+      cursor: pointer; line-height: 40px; text-align: center;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    @media (max-width: 700px) {
+      #panel-toggle { display: block; }
+      #panel {
+        transform: translateX(-110%);
+        transition: transform 0.25s ease;
+      }
+      #panel.open {
+        transform: translateX(0);
+      }
+      #gizmo, #gizmo-label { display: none; }
+    }
 
     /* ── Gizmo ──────────────────────────────────────────── */
     #gizmo {
@@ -144,6 +168,7 @@
   <span id="horizon-label" class="ref-label">視平線 HL</span>
   <span id="vertical-label" class="ref-label">視垂線 VL</span>
 
+  <div id="panel-toggle">☰</div>
   <div id="panel">
     <h2>透視學習工具</h2>
     <p class="subtitle">觀察平行的分割線在<br>不同透視角度下的變化</p>
@@ -282,18 +307,53 @@
     grid.rotation.x = Math.PI / 2; grid.position.z = -0.5;
     scene.add(grid);
 
-    // ── Drag to rotate rectangle ───────────────────────────────────
+    // ── Drag to rotate rectangle (with multi-touch pinch zoom) ─────
     const rotQuat = new THREE.Quaternion();
     const tmpQ = new THREE.Quaternion();
     const AX = new THREE.Vector3(1,0,0), AY = new THREE.Vector3(0,1,0);
     let rotating = false, rLastX = 0, rLastY = 0;
 
+    // Track active pointers for multi-touch detection
+    const activePointers = new Map(); // pointerId → {x, y}
+    let pinching = false, lastPinchDist = 0;
+
+    function getPinchDist() {
+      const pts = [...activePointers.values()];
+      if (pts.length < 2) return 0;
+      const dx = pts[1].x - pts[0].x, dy = pts[1].y - pts[0].y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
     renderer.domElement.addEventListener('pointerdown', (e) => {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size >= 2) {
+        // Switch to pinch mode, cancel any rotation
+        rotating = false;
+        pinching = true;
+        lastPinchDist = getPinchDist();
+        return;
+      }
+
       if (e.button !== 0) return;
       rotating = true; rLastX = e.clientX; rLastY = e.clientY;
       renderer.domElement.setPointerCapture(e.pointerId);
     });
+
     renderer.domElement.addEventListener('pointermove', (e) => {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (pinching && activePointers.size >= 2) {
+        const dist = getPinchDist();
+        if (lastPinchDist > 0) {
+          const scale = dist / lastPinchDist;
+          camera.position.z = Math.max(1.5, Math.min(18, camera.position.z / scale));
+          updateCamera();
+        }
+        lastPinchDist = dist;
+        return;
+      }
+
       if (!rotating) return;
       const dx = e.clientX - rLastX, dy = e.clientY - rLastY;
       rLastX = e.clientX; rLastY = e.clientY;
@@ -302,10 +362,16 @@
       tmpQ.setFromAxisAngle(AX, dy * s); rotQuat.premultiply(tmpQ);
       rectGroup.quaternion.copy(rotQuat);
     });
-    renderer.domElement.addEventListener('pointerup', () => { rotating = false; });
-    renderer.domElement.addEventListener('pointercancel', () => { rotating = false; });
 
-    // Scroll → zoom
+    function onPointerEnd(e) {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) { pinching = false; lastPinchDist = 0; }
+      if (activePointers.size === 0) rotating = false;
+    }
+    renderer.domElement.addEventListener('pointerup', onPointerEnd);
+    renderer.domElement.addEventListener('pointercancel', onPointerEnd);
+
+    // Scroll → zoom (desktop)
     renderer.domElement.addEventListener('wheel', (e) => {
       e.preventDefault();
       camera.position.z = Math.max(1.5, Math.min(18, camera.position.z + e.deltaY * 0.005));
@@ -455,6 +521,21 @@
         $(id).value = 0; $(id + 'Val').textContent = '0.0';
       }
       layoutRefLines(); updateCamera();
+    });
+
+    // ── Mobile panel toggle ───────────────────────────────────────
+    const panelToggle = $('panel-toggle');
+    const panel = $('panel');
+    panelToggle.addEventListener('click', () => {
+      const open = panel.classList.toggle('open');
+      panelToggle.textContent = open ? '✕' : '☰';
+    });
+    // Close panel when tapping outside on mobile
+    renderer.domElement.addEventListener('pointerdown', () => {
+      if (panel.classList.contains('open')) {
+        panel.classList.remove('open');
+        panelToggle.textContent = '☰';
+      }
     });
 
     // ── Init + resize ──────────────────────────────────────────────
